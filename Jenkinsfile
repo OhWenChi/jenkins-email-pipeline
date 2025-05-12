@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        EMAIL_RECIPIENTS = 'your_actual_email@example.com'  // Replace with your email address
+        EMAIL_RECIPIENTS = 'wenchi9318@gmail.com'
         EMAIL_SUBJECT = "Jenkins Build #${env.BUILD_NUMBER} - ${currentBuild.result}"
         EMAIL_BODY = "Job: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\nStatus: ${currentBuild.result}\nURL: ${env.BUILD_URL}"
     }
