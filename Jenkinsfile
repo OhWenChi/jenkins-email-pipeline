@@ -2,61 +2,34 @@ pipeline {
     agent any
 
     environment {
-        // Customize these
-        EMAIL_RECIPIENT = 'wenchi9318@gmail.com'
-        EMAIL_SUBJECT_PREFIX = 'Jenkins Job: '
-    }
-
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10')) // clean old builds
-        skipDefaultCheckout(true) // skip automatic SCM checkout
-        timeout(time: 10, unit: 'MINUTES') // timeout if build hangs
+        EMAIL_RECIPIENTS = 'wenchi9318@gmail.com'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Build') {
             steps {
-                echo '🔧 Building the application...'
-                // Add build steps here
+                echo 'Building the application...'
             }
         }
 
         stage('Test') {
             steps {
-                echo '🧪 Running tests...'
-                // Add test logic here
+                echo 'Running tests...'
             }
             post {
-                always {
+                success {
                     emailext(
-                        subject: "${EMAIL_SUBJECT_PREFIX} Test Stage Completed",
-                        body: """<p><b>Test stage completed.</b></p><p>Job: ${env.JOB_NAME}<br>Build: #${env.BUILD_NUMBER}</p>""",
-                        to: "${EMAIL_RECIPIENT}",
-                        mimeType: 'text/html',
+                        subject: 'Test Stage Completed Successfully',
+                        body: "The Test stage was successful. Job: ${env.JOB_NAME} Build: #${env.BUILD_NUMBER}",
+                        to: "${env.EMAIL_RECIPIENTS}",
                         attachLog: true
                     )
                 }
-            }
-        }
-
-        stage('Security Scan') {
-            steps {
-                echo '🔍 Performing security scan...'
-                // Add scan logic here
-            }
-            post {
-                always {
+                failure {
                     emailext(
-                        subject: "${EMAIL_SUBJECT_PREFIX} Security Scan Completed",
-                        body: """<p><b>Security scan stage completed.</b></p><p>Job: ${env.JOB_NAME}<br>Build: #${env.BUILD_NUMBER}</p>""",
-                        to: "${EMAIL_RECIPIENT}",
-                        mimeType: 'text/html',
+                        subject: 'Test Stage Failed',
+                        body: "The Test stage failed. Job: ${env.JOB_NAME} Build: #${env.BUILD_NUMBER}",
+                        to: "${env.EMAIL_RECIPIENTS}",
                         attachLog: true
                     )
                 }
@@ -65,27 +38,13 @@ pipeline {
     }
 
     post {
-        success {
+        always {
             emailext(
-                subject: "${EMAIL_SUBJECT_PREFIX} SUCCESS",
-                body: """<p><b>Build succeeded!</b></p><p>Job: ${env.JOB_NAME}<br>Build: #${env.BUILD_NUMBER}</p>""",
-                to: "${EMAIL_RECIPIENT}",
-                mimeType: 'text/html'
-            )
-        }
-
-        failure {
-            emailext(
-                subject: "${EMAIL_SUBJECT_PREFIX} FAILURE",
-                body: """<p><b>Build failed.</b></p><p>Job: ${env.JOB_NAME}<br>Build: #${env.BUILD_NUMBER}</p>""",
-                to: "${EMAIL_RECIPIENT}",
-                mimeType: 'text/html',
+                subject: "Build #${env.BUILD_NUMBER} Status",
+                body: "Build Status: ${currentBuild.currentResult}\nCheck the logs for details.\nJob: ${env.JOB_NAME}",
+                to: "${env.EMAIL_RECIPIENTS}",
                 attachLog: true
             )
-        }
-
-        always {
-            echo '📤 Post-build actions completed.'
         }
     }
 }
