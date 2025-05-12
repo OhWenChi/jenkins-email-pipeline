@@ -2,12 +2,15 @@ pipeline {
     agent any
 
     environment {
-        EMAIL_RECIPIENTS = 'wenchi9318@gmail.com'
+        // Customize these
+        EMAIL_RECIPIENT = 'wenchi9318@gmail.com'
+        EMAIL_SUBJECT_PREFIX = 'Jenkins Job: '
     }
 
     options {
-        skipDefaultCheckout true
-        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10')) // clean old builds
+        skipDefaultCheckout(true) // skip automatic SCM checkout
+        timeout(time: 10, unit: 'MINUTES') // timeout if build hangs
     }
 
     stages {
@@ -19,33 +22,22 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo 'Building the application...'
+                echo '🔧 Building the application...'
+                // Add build steps here
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Running tests...'
+                echo '🧪 Running tests...'
+                // Add test logic here
             }
             post {
-                success {
-                    emailext (
-                        subject: 'Jenkins: Test Stage Successful',
-                        body: """<p>The <b>Test</b> stage completed <span style='color:green;'><b>successfully</b></span>.</p>
-                                 <p>Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}</p>
-                                 <p>Check it <a href='${env.BUILD_URL}'>here</a>.</p>""",
-                        to: "${env.EMAIL_RECIPIENTS}",
-                        mimeType: 'text/html',
-                        attachLog: true
-                    )
-                }
-                failure {
-                    emailext (
-                        subject: 'Jenkins: Test Stage Failed',
-                        body: """<p>The <b>Test</b> stage <span style='color:red;'><b>FAILED</b></span>.</p>
-                                 <p>Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}</p>
-                                 <p>See details <a href='${env.BUILD_URL}'>here</a>.</p>""",
-                        to: "${env.EMAIL_RECIPIENTS}",
+                always {
+                    emailext(
+                        subject: "${EMAIL_SUBJECT_PREFIX} Test Stage Completed",
+                        body: """<p><b>Test stage completed.</b></p><p>Job: ${env.JOB_NAME}<br>Build: #${env.BUILD_NUMBER}</p>""",
+                        to: "${EMAIL_RECIPIENT}",
                         mimeType: 'text/html',
                         attachLog: true
                     )
@@ -55,16 +47,15 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                echo 'Performing security scan...'
+                echo '🔍 Performing security scan...'
+                // Add scan logic here
             }
             post {
                 always {
-                    emailext (
-                        subject: 'Jenkins: Security Scan Completed',
-                        body: """<p><b>Security scan</b> stage completed.</p>
-                                 <p>Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}</p>
-                                 <p>Link: <a href='${env.BUILD_URL}'>${env.BUILD_URL}</a></p>""",
-                        to: "${env.EMAIL_RECIPIENTS}",
+                    emailext(
+                        subject: "${EMAIL_SUBJECT_PREFIX} Security Scan Completed",
+                        body: """<p><b>Security scan stage completed.</b></p><p>Job: ${env.JOB_NAME}<br>Build: #${env.BUILD_NUMBER}</p>""",
+                        to: "${EMAIL_RECIPIENT}",
                         mimeType: 'text/html',
                         attachLog: true
                     )
@@ -75,25 +66,26 @@ pipeline {
 
     post {
         success {
-            emailext (
-                subject: "Jenkins Build #${env.BUILD_NUMBER} Success",
-                body: """<p>The Jenkins job <b>${env.JOB_NAME}</b> completed <span style='color:green;'><b>successfully</b></span>.</p>
-                         <p>Details: <a href='${env.BUILD_URL}'>Build #${env.BUILD_NUMBER}</a></p>""",
-                to: "${env.EMAIL_RECIPIENTS}",
+            emailext(
+                subject: "${EMAIL_SUBJECT_PREFIX} SUCCESS",
+                body: """<p><b>Build succeeded!</b></p><p>Job: ${env.JOB_NAME}<br>Build: #${env.BUILD_NUMBER}</p>""",
+                to: "${EMAIL_RECIPIENT}",
+                mimeType: 'text/html'
+            )
+        }
+
+        failure {
+            emailext(
+                subject: "${EMAIL_SUBJECT_PREFIX} FAILURE",
+                body: """<p><b>Build failed.</b></p><p>Job: ${env.JOB_NAME}<br>Build: #${env.BUILD_NUMBER}</p>""",
+                to: "${EMAIL_RECIPIENT}",
                 mimeType: 'text/html',
                 attachLog: true
             )
         }
 
-        failure {
-            emailext (
-                subject: "Jenkins Build #${env.BUILD_NUMBER} Failed",
-                body: """<p>The Jenkins job <b>${env.JOB_NAME}</b> <span style='color:red;'><b>FAILED</b></span>.</p>
-                         <p>Details: <a href='${env.BUILD_URL}'>Build #${env.BUILD_NUMBER}</a></p>""",
-                to: "${env.EMAIL_RECIPIENTS}",
-                mimeType: 'text/html',
-                attachLog: true
-            )
+        always {
+            echo '📤 Post-build actions completed.'
         }
     }
 }
