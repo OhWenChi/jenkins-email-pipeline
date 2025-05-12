@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        EMAIL_RECIPIENTS = 'wenchi9318@gmail.com' 
+        EMAIL_RECIPIENTS = 'your_actual_email@example.com'  // Replace with your email address
         EMAIL_SUBJECT = "Jenkins Build #${env.BUILD_NUMBER} - ${currentBuild.result}"
         EMAIL_BODY = "Job: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\nStatus: ${currentBuild.result}\nURL: ${env.BUILD_URL}"
     }
@@ -25,8 +25,7 @@ pipeline {
                         body: "${env.EMAIL_BODY}\nTest stage completed successfully.",
                         to: "${env.EMAIL_RECIPIENTS}",
                         attachLog: true,
-                        mimeType: 'text/plain',
-                        debug: true  // Enable debugging here
+                        mimeType: 'text/plain'
                     )
                 }
                 failure {
@@ -35,8 +34,7 @@ pipeline {
                         body: "${env.EMAIL_BODY}\nTest stage failed.",
                         to: "${env.EMAIL_RECIPIENTS}",
                         attachLog: true,
-                        mimeType: 'text/plain',
-                        debug: true  // Enable debugging here
+                        mimeType: 'text/plain'
                     )
                 }
             }
@@ -50,8 +48,7 @@ pipeline {
                 body: "${env.EMAIL_BODY}\nBuild has finished. Check the logs for more details.",
                 to: "${env.EMAIL_RECIPIENTS}",
                 attachLog: true,
-                mimeType: 'text/plain',
-                debug: true  // Enable debugging here
+                mimeType: 'text/plain'
             )
         }
     }
