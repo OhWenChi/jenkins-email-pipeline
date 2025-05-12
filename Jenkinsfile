@@ -2,9 +2,7 @@ pipeline {
     agent any
 
     environment {
-        EMAIL_RECIPIENTS = 'wenchi9318@gmail.com'
-        EMAIL_SUBJECT = "Jenkins Build #${env.BUILD_NUMBER} - ${currentBuild.result}"
-        EMAIL_BODY = "Job: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\nStatus: ${currentBuild.result}\nURL: ${env.BUILD_URL}"
+        EMAIL_RECIPIENTS = 'user@gmail.com'
     }
 
     stages {
@@ -19,23 +17,48 @@ pipeline {
                 echo 'Running tests...'
             }
             post {
-                success {
-                    emailext(
-                        subject: "${env.EMAIL_SUBJECT}",
-                        body: "${env.EMAIL_BODY}\nTest stage completed successfully.",
-                        to: "${env.EMAIL_RECIPIENTS}",
-                        attachLog: true,
-                        mimeType: 'text/plain'
-                    )
+                always {
+                    script {
+                        emailext(
+                            subject: "Jenkins Build #${env.BUILD_NUMBER} - ${currentBuild.result}",
+                            body: """
+                                <h3>Job Details</h3>
+                                <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                                <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                                <p><strong>Status:</strong> ${currentBuild.result}</p>
+                                <p><strong>URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                                <p>Test stage completed.</p>
+                            """,
+                            to: "${env.EMAIL_RECIPIENTS}",
+                            attachLog: true,
+                            mimeType: 'text/html'
+                        )
+                    }
                 }
-                failure {
-                    emailext(
-                        subject: "${env.EMAIL_SUBJECT}",
-                        body: "${env.EMAIL_BODY}\nTest stage failed.",
-                        to: "${env.EMAIL_RECIPIENTS}",
-                        attachLog: true,
-                        mimeType: 'text/plain'
-                    )
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                echo 'Performing security scan...'
+            }
+            post {
+                always {
+                    script {
+                        emailext(
+                            subject: "Jenkins Build #${env.BUILD_NUMBER} - ${currentBuild.result}",
+                            body: """
+                                <h3>Security Scan Completed</h3>
+                                <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                                <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                                <p><strong>Status:</strong> ${currentBuild.result}</p>
+                                <p><strong>URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                            """,
+                            to: "${env.EMAIL_RECIPIENTS}",
+                            attachLog: true,
+                            mimeType: 'text/html'
+                        )
+                    }
                 }
             }
         }
@@ -44,11 +67,18 @@ pipeline {
     post {
         always {
             emailext(
-                subject: "${env.EMAIL_SUBJECT}",
-                body: "${env.EMAIL_BODY}\nBuild has finished. Check the logs for more details.",
+                subject: "Jenkins Build #${env.BUILD_NUMBER} - ${currentBuild.result}",
+                body: """
+                    <h3>Final Build Status</h3>
+                    <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                    <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                    <p><strong>Status:</strong> ${currentBuild.result}</p>
+                    <p><strong>URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                    <p>Build has finished. Check logs for details.</p>
+                """,
                 to: "${env.EMAIL_RECIPIENTS}",
                 attachLog: true,
-                mimeType: 'text/plain'
+                mimeType: 'text/html'
             )
         }
     }
